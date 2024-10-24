@@ -1,6 +1,5 @@
 import pandas as pd
 import re
-import folium
 import h3
 import dash
 from dash import dcc, html

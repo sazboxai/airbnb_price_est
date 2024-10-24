@@ -3,7 +3,6 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import h3
-import numpy as np
 
 def sample_space(lat, lon, df ):
     resp = []
