@@ -41,4 +41,4 @@ The dataset used for this project is pre-scraped Airbnb listing data, including:
 
 2. **Install Requirements**:
    ```bash
-pip install -r requirements.txt
+   pip install -r requirements.txt
