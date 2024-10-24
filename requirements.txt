@@ -1,0 +1,5 @@
+pandas==2.2.2
+h3==4.1.1
+scikit-learn==1.5.2
+dash==2.18.1
+dash-leaflet==1.0.15

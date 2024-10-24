@@ -39,6 +39,10 @@ The dataset used for this project is pre-scraped Airbnb listing data, including:
    cd airbnb-price-estimation
 
 
-2. **Install Requirements**:
+2. **Build your docker image**:
    ```bash
-   pip install -r requirements.txt
+   docker build -t air_knn . 
+   
+3. **Build your docker image**:
+   ```bash
+   docker run -p <your_port>:8080 -d  --name air_knn air_knn 
