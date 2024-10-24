@@ -102,6 +102,46 @@ def create_hex_layer(data):
 
 
 app.layout = html.Div([
+html.Div(["Welcome to air_knn - Your Price Estimation Tool"], style={'backgroundColor': '#007acc', 'color': 'white', 'padding': '20px', 'textAlign': 'center'}),
+
+html.Div([dcc.Markdown(
+            """## Welcome to the Airbnb Pricing Tool
+
+This tool is designed to help you optimize the price of your Airbnb listing based on data from recent listings. On the map below, you'll see Medellín divided into hexagons using the H3 indexing system (shoutout to Uber's [H3 library](https://uber.github.io/h3-py)!).
+Brighter areas on the map indicate higher occupancy rates, signaling greater demand in those zones.
+
+The model takes into account:
+- Latitude and longitude
+- Number of rooms
+- Number of guests
+- Bathrooms
+- Beds
+
+Based on this information, it suggests a price to help you maximize your revenue, utilizing price elasticity driven by local demand.
+
+            """, className='Intro'),
+        dcc.Markdown("""
+        ## Step-by-Step Guide
+        """),
+        dcc.Markdown("""
+        ### Step 1: Input Your Details
+        * Enter the number of guests, beds, and bathrooms.
+        * Provide the latitude and longitude for location-specific recommendations, or double-click on the map to select your desired position for tailored suggestions. 
+        """, className='step-content'),
+
+        dcc.Markdown("""
+        ### Step 2: Submit Your Request
+        * Click on the "Calculate" button.
+        * Our algorithm will calculate the best estimate price for you.
+        """, className='step-content'),
+
+        dcc.Markdown("""
+        ### Step 3: Review Recommendations
+        * Check the calculated suggested price and estimated revenue.
+        * Review the list of nearest similar listings provided.
+        """, className='step-content'),
+    ], style={'padding': '10px', 'margin': '10px', 'border': '1px solid #cccccc', 'borderRadius': '5px'}),
+
     dl.Map(center=[6.2442, -75.5812], zoom=12, children=[
         dl.TileLayer(),
         dl.LayerGroup(id="hex-layer"),
@@ -110,22 +150,52 @@ app.layout = html.Div([
     html.Div(id="click-coordinates", style={'padding': '10px', 'font-size': '18px'}),
 
     html.Div([
-        html.Label('Latitud:'),
+        html.Label('Lat:'),
         dcc.Input(id='lat-input', type='number', step=0.000001, placeholder="Latitud", style={'margin-right': '10px'}),
-        html.Label('Longitud:'),
+        html.Label('Lon:'),
         dcc.Input(id='lon-input', type='number', step=0.000001, placeholder="Longitud", style={'margin-right': '10px'}),
         html.Button('Locate', id='locate-button', n_clicks=0),
         html.Br(),
-        html.Label('Número de huéspedes:'),
-        dcc.Input(id='guest-input', type='number', min=1, placeholder="Número de huéspedes", style={'margin-right': '10px'}),
-        html.Label('Número de camas:'),
-        dcc.Input(id='beds-input', type='number', min=1, placeholder="Número de camas", style={'margin-right': '10px'}),
-        html.Label('Número de baños:'),
-        dcc.Input(id='bathrooms-input', type='number', min=1, placeholder="Número de baños"),
+        html.Label('Guest number:'),
+        dcc.Input(id='guest-input', type='number', min=1, placeholder="Guests", style={'margin-right': '10px'}),
+        html.Label('Beds number:'),
+        dcc.Input(id='beds-input', type='number', min=1, placeholder="Beds", style={'margin-right': '10px'}),
+        html.Label('Total baths:'),
+        dcc.Input(id='bathrooms-input', type='number', min=1, placeholder="Baths"),
     ], style={'padding': '10px', 'font-size': '18px'}),
 
-    html.Button('Calcular', id='calculate-button', n_clicks=0, style={'margin-top': '10px'}),
+    html.Button('Estimate', id='calculate-button', n_clicks=0, style={'margin-top': '10px'}),
     html.Div(id="output-result", style={'padding': '20px', 'font-size': '18px'}),
+
+    html.Div([
+        html.H3("Scan a New Area"),
+        html.Div("Please fill out the form below to suggest a new area for scanning:"),
+
+        # Input for area
+        html.Div([
+            html.Label('Area:'),
+            dcc.Input(id='area-input', type='text', placeholder='Enter area name', style={'width': '100%'}),
+        ], style={'marginBottom': '10px'}),
+
+        # Input for name
+        html.Div([
+            html.Label('Your Name:'),
+            dcc.Input(id='name-input', type='text', placeholder='Enter your name', style={'width': '100%'}),
+        ], style={'marginBottom': '10px'}),
+
+        # Input for email
+        html.Div([
+            html.Label('Email:'),
+            dcc.Input(id='email-input', type='email', placeholder='Enter your email', style={'width': '100%'}),
+        ], style={'marginBottom': '10px'}),
+
+        # Submit Button
+        html.Button('Submit', id='submit-button', n_clicks=0, style={'marginTop': '20px'}),
+
+        # Placeholder for displaying acknowledgment
+        html.Div(id='form-output', style={'marginTop': '20px', 'color': 'green'}),
+    ], style={'padding': '20px', 'margin': '20px', 'border': '1px solid #cccccc', 'borderRadius': '5px'}),
+
 ])
 
 @app.callback(
@@ -182,14 +252,38 @@ def calculate_result(n_clicks, guests, beds, bathrooms, lat, lon):
             suggested_price = estimate['ans']['suggested_price']
             estimated_revenue = estimate['ans']['Estimated_monthly_revenue']
             nearest_neighbors = estimate['ans']['nearest_listing']
-            return f"""
-            Precio sugerido: ${suggested_price:.2f}
-            Ingresos estimados: ${estimated_revenue:.2f}
-            Propiedades cercanas: {', '.join(nearest_neighbors)}
-            """
+            neighbors_links = [html.A(url, href=url, target="_blank", style={'display': 'block'}) for url in
+                               nearest_neighbors]
+            return html.Div([
+                html.Div(f"Suggested price: ${suggested_price:.2f}"),
+                html.Div(f"Estimated Revenue: ${estimated_revenue:.2f}"),
+                html.H3("Similar Listings in the area", style={'margin': '20px 0', 'textAlign': 'center'}),
+                html.Div(neighbors_links),
+            ])
+
         else:
             return """There is not enough listings in that Zone to estimate a price"""
-    return "Esperando los inputs..."
+    return "Waiting inputs..."
+
+contacts = []
+
+@app.callback(
+    Output('form-output', 'children'),
+    Input('submit-button', 'n_clicks'),
+    [
+        dash.dependencies.State('area-input', 'value'),
+        dash.dependencies.State('name-input', 'value'),
+        dash.dependencies.State('email-input', 'value')
+    ])
+
+
+def update_output(n_clicks, area, name, email):
+    if n_clicks > 0:
+        contacts.append({'name':name,
+                         'email':email,
+                         'area':area})
+        pd.DataFrame(contacts).to_csv('contacts.csv')
+        return f'Thank you {name}, your request for scanning the {area} area has been recorded. We will contact you at {email}.'
 
 
 if __name__ == '__main__':
