@@ -43,6 +43,6 @@ The dataset used for this project is pre-scraped Airbnb listing data, including:
    ```bash
    docker build -t air_knn . 
    
-3**Build your docker image**:
+3. **Build your docker image**:
    ```bash
    docker run -p <your_port>:8080 -d  --name air_knn air_knn 
