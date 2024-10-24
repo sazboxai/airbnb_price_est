@@ -7,6 +7,9 @@ from dash import dcc, html
 import dash_leaflet as dl
 from dash.dependencies import Input, Output, State
 import unicodedata
+from estimation import estimation
+
+
 
 
 # Function to check if a character is a currency symbol
@@ -26,8 +29,6 @@ availability = pd.read_pickle("availability.pkl")
 listings['guest_number'] = listings['guest_number'].apply(lambda x: None if x is None else int(x))
 listings['number_of_beds'] = listings['number_of_beds'].apply(lambda x: None if x is None or x=='' else int(x))
 listings['number_of_bathrooms'] = listings['number_of_bathrooms'].apply(lambda x: None if x is None  or x=='' else int(x))
-
-
 ### extracting the currency
 listings['currency_price_pernight'] = listings['price_per_night'].apply(lambda x: None if x is None else  check_crrency(x) )
 
@@ -176,22 +177,18 @@ def update_position(locate_n_clicks, click_data, lat_input, lon_input):
 )
 def calculate_result(n_clicks, guests, beds, bathrooms, lat, lon):
     if n_clicks > 0 and guests and beds and bathrooms:
-        suggested_price = 100 + guests * 10 + beds * 5 + bathrooms * 8
-        estimated_occupancy = 0.8
-        estimated_revenue = suggested_price * estimated_occupancy
-        nearest_neighbors = [
-            "https://www.airbnb.com/rooms/1",
-            "https://www.airbnb.com/rooms/2",
-            "https://www.airbnb.com/rooms/3",
-            "https://www.airbnb.com/rooms/4",
-            "https://www.airbnb.com/rooms/5"
-        ]
-        return f"""
-        Precio sugerido: ${suggested_price:.2f}
-        Ocupación estimada: {estimated_occupancy * 100:.2f}%
-        Ingresos estimados: ${estimated_revenue:.2f}
-        Propiedades cercanas: {', '.join(nearest_neighbors)}
-        """
+        estimate = estimation(listings_summary, guests, beds, bathrooms, lat, lon)
+        if estimate['status'] == 200:
+            suggested_price = estimate['ans']['suggested_price']
+            estimated_revenue = estimate['ans']['Estimated_monthly_revenue']
+            nearest_neighbors = estimate['ans']['nearest_listing']
+            return f"""
+            Precio sugerido: ${suggested_price:.2f}
+            Ingresos estimados: ${estimated_revenue:.2f}
+            Propiedades cercanas: {', '.join(nearest_neighbors)}
+            """
+        else:
+            return """There is not enough listings in that Zone to estimate a price"""
     return "Esperando los inputs..."
 
 
