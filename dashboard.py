@@ -76,7 +76,7 @@ def occupancy_to_color(occupancy):
     return f'rgb(0,{green},0)'  # Más verde para más ocupación
 
 # Inicializar la aplicación Dash
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, requests_pathname_prefix="/ari_knn/")
 
 
 def create_hex_layer(data):
